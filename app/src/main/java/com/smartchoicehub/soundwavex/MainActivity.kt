@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
         requestAudioPermission()
 
         val musicRepo = MusicRepositoryImpl(this)
-        val mainViewModelFactory = MainViewModelFactory(GetAllSongsUseCase(musicRepo))
+        val mainViewModelFactory = MainViewModelFactory(musicRepo)
         val playerViewModelFactory = PlayerViewModelFactory(musicRepo)
 
         setContent {

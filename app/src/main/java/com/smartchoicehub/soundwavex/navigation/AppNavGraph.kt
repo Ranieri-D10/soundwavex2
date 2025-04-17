@@ -43,7 +43,14 @@ fun AppNavGraph(
             val songs by mainViewModel.songs.collectAsState()
             val song = songs.find { it.id == songId }
             if (song != null) {
-                PlayerScreen(viewModel = playerViewModel, currentSong = song)
+                val songsInSameFolder = songs.filter {
+                    it.uri.substringBeforeLast("/") == song.uri.substringBeforeLast("/")
+                }
+                PlayerScreen(
+                    viewModel = playerViewModel,
+                    currentSong = song,
+                    songList = songsInSameFolder
+                )
             }
         }
 

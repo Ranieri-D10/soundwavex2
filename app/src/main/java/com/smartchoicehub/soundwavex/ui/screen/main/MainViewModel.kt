@@ -1,15 +1,14 @@
 package com.smartchoicehub.soundwavex.ui.screen.main
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.smartchoicehub.soundwavex.data.model.Song
-import com.smartchoicehub.soundwavex.domain.usecase.GetAllSongsUseCase
+import com.smartchoicehub.soundwavex.data.repository.MusicRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class MainViewModel(private val getAllSongsUseCase: GetAllSongsUseCase) : ViewModel() {
+class MainViewModel(private val repository: MusicRepository) : ViewModel() {
 
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     val songs: StateFlow<List<Song>> = _songs
@@ -17,13 +16,16 @@ class MainViewModel(private val getAllSongsUseCase: GetAllSongsUseCase) : ViewMo
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
+    private val _folders = MutableStateFlow<List<String>>(emptyList())
+    val folders: StateFlow<List<String>> = _folders
+
     init {
         loadSongs()
     }
 
-     fun loadSongs() {
+    fun loadSongs() {
         viewModelScope.launch {
-            _songs.value = getAllSongsUseCase()
+            _songs.value = repository.getSongs()
         }
     }
 
@@ -36,12 +38,20 @@ class MainViewModel(private val getAllSongsUseCase: GetAllSongsUseCase) : ViewMo
             it.title.contains(_searchQuery.value, ignoreCase = true)
         }
     }
-}
 
-class MainViewModelFactory(
-    private val useCase: GetAllSongsUseCase
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return MainViewModel(useCase) as T
+    fun loadFolders() {
+        viewModelScope.launch {
+            _folders.value = repository.getFolders()
+        }
+    }
+
+    fun loadSongsByFolder(folderPath: String) {
+        viewModelScope.launch {
+            _songs.value = repository.getSongsByFolder(folderPath)
+        }
+    }
+
+    fun clearSongs() {
+        _songs.value = emptyList()
     }
 }
