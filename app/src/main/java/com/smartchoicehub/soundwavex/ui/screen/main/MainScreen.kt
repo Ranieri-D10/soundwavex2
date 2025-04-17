@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.smartchoicehub.soundwavex.ui.screen.components.MusicListItem
 
 
 @Composable
@@ -19,6 +20,11 @@ fun MainScreen(
     onSongClick: (com.smartchoicehub.soundwavex.data.model.Song) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 🔁 Chama loadSongs apenas uma vez ao abrir a tela
+    LaunchedEffect(Unit) {
+        mainViewModel.loadSongs()
+    }
+
     val songs by mainViewModel.songs.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
@@ -27,7 +33,11 @@ fun MainScreen(
                 it.artist.contains(searchQuery, ignoreCase = true)
     }
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -42,19 +52,9 @@ fun MainScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             items(filteredSongs) { song ->
-                ListItem(
-                    headlineContent = { Text(song.title) },
-                    supportingContent = { Text(song.artist) },
-                    modifier = Modifier.clickable {
-                        onSongClick(song) // <- chamada do callback
-                    },
-                    trailingContent = {
-                        IconButton(onClick = {
-                            onSongClick(song) // também pode tocar aqui se quiser
-                        }) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Tocar")
-                        }
-                    }
+                MusicListItem(
+                    song = song,
+                    onClick = { onSongClick(song) }
                 )
                 Divider()
             }

@@ -6,13 +6,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Brightness6
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
 
 @Composable
 fun NavigationDrawer(
@@ -21,6 +23,7 @@ fun NavigationDrawer(
     onDismiss: () -> Unit,
     onToggleTheme: () -> Unit,
     onNavigateToPlaylist: () -> Unit,
+    onNavigateToHome: () -> Unit,
     content: @Composable () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -44,11 +47,25 @@ fun NavigationDrawer(
                     .width(280.dp)
                     .align(Alignment.TopEnd)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .padding(WindowInsets.systemBars.asPaddingValues()) // <-- aqui o segredo
+                ) {
                     Text(
                         text = "Configurações",
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    NavigationDrawerItem(
+                        label = { Text("Início") },
+                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                        selected = false,
+                        onClick = {
+                            onNavigateToHome()
+                            onDismiss()
+                        }
                     )
 
                     NavigationDrawerItem(

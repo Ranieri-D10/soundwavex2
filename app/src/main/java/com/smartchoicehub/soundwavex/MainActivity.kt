@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.smartchoicehub.soundwavex.data.datasource.LocalMusicDataSource
 import com.smartchoicehub.soundwavex.data.repository.MusicRepositoryImpl
 import com.smartchoicehub.soundwavex.domain.usecase.GetAllSongsUseCase
 import com.smartchoicehub.soundwavex.navigation.AppNavGraph
@@ -39,12 +38,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         requestAudioPermission()
 
-        val musicRepo = MusicRepositoryImpl(LocalMusicDataSource(this))
+        val musicRepo = MusicRepositoryImpl(this)
         val mainViewModelFactory = MainViewModelFactory(GetAllSongsUseCase(musicRepo))
         val playerViewModelFactory = PlayerViewModelFactory(musicRepo)
 
         setContent {
-            var isDarkMode by remember { mutableStateOf(false) }
+            var isDarkMode by remember { mutableStateOf(true) }
             var isDrawerOpen by remember { mutableStateOf(false) }
 
             SoundwavexTheme(darkTheme = isDarkMode) {
@@ -60,6 +59,10 @@ class MainActivity : ComponentActivity() {
                     onToggleTheme = { isDarkMode = !isDarkMode },
                     onNavigateToPlaylist = {
                         navController.navigate("playlist")
+                        isDrawerOpen = false
+                    },
+                    onNavigateToHome = {
+                        navController.navigate("main")
                         isDrawerOpen = false
                     }
                 ) {

@@ -5,43 +5,55 @@ import android.provider.MediaStore
 import com.smartchoicehub.soundwavex.data.model.Song
 
 class LocalMusicDataSource(private val context: Context) {
-    fun fetchLocalSongs(): List<Song> {
-        val songs = mutableListOf<Song>()
+
+    fun getSongs(): List<Song> {
+        val songList = mutableListOf<Song>()
+
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.DURATION
         )
+
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
         val sortOrder = "${MediaStore.Audio.Media.TITLE} ASC"
 
-        context.contentResolver.query(
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+        val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+
+        val cursor = context.contentResolver.query(
+            uri,
             projection,
             selection,
             null,
             sortOrder
-        )?.use { cursor ->
-            val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-            val titleIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-            val artistIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-            val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
-            val durationIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+        )
 
-            while (cursor.moveToNext()) {
-                val song = Song(
-                    id = cursor.getLong(idIndex),
-                    title = cursor.getString(titleIndex),
-                    artist = cursor.getString(artistIndex),
-                    uri = cursor.getString(dataIndex),
-                    duration = cursor.getLong(durationIndex)
+        cursor?.use {
+            val idColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+            val titleColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+            val artistColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+            val durationColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+
+            while (it.moveToNext()) {
+                val id = it.getLong(idColumn)
+                val title = it.getString(titleColumn)
+                val artist = it.getString(artistColumn)
+                val duration = it.getLong(durationColumn)
+                val songUri = "${uri}/$id"
+
+                songList.add(
+                    Song(
+                        id = id,
+                        title = title,
+                        artist = artist,
+                        duration = duration,
+                        uri = songUri
+                    )
                 )
-                songs.add(song)
             }
         }
 
-        return songs
+        return songList
     }
 }

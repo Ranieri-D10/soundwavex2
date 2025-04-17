@@ -17,7 +17,11 @@ class MainViewModel(private val getAllSongsUseCase: GetAllSongsUseCase) : ViewMo
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
-    fun loadSongs() {
+    init {
+        loadSongs()
+    }
+
+     fun loadSongs() {
         viewModelScope.launch {
             _songs.value = getAllSongsUseCase()
         }
