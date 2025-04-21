@@ -1,5 +1,6 @@
 package com.smartchoicehub.soundwavex
 
+import MainViewModel
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,9 +8,11 @@ import androidx.compose.material3.Scaffold
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.smartchoicehub.soundwavex.data.repository.MusicRepositoryImpl
+import com.smartchoicehub.soundwavex.domain.usecase.GetAllSongsUseCase
+import com.smartchoicehub.soundwavex.domain.usecase.GetBucketsUseCase
+import com.smartchoicehub.soundwavex.domain.usecase.GetSongsByBucketUseCase
 import com.smartchoicehub.soundwavex.navigation.AppNavGraph
 import com.smartchoicehub.soundwavex.ui.screen.components.BottomNavBar
-import com.smartchoicehub.soundwavex.ui.screen.main.MainViewModel
 import com.smartchoicehub.soundwavex.ui.screen.main.MainViewModelFactory
 import com.smartchoicehub.soundwavex.ui.screen.player.PlayerViewModel
 import com.smartchoicehub.soundwavex.ui.screen.player.PlayerViewModelFactory
@@ -26,8 +29,17 @@ class MainActivity : ComponentActivity() {
 
             val musicRepository = MusicRepositoryImpl(applicationContext)
 
+            val getAllSongsUseCase = GetAllSongsUseCase(musicRepository)
+            val getBucketsUseCase = GetBucketsUseCase(musicRepository)
+            val getSongsByBucketUseCase = GetSongsByBucketUseCase(musicRepository)
+
+
             val mainViewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(musicRepository)
+                factory = MainViewModelFactory(
+                    getAllSongsUseCase = getAllSongsUseCase,
+                    getBucketsUseCase = getBucketsUseCase,
+                    getSongsByBucketUseCase = getSongsByBucketUseCase
+                )
             )
             val playerViewModel: PlayerViewModel = viewModel(
                 factory = PlayerViewModelFactory(musicRepository)

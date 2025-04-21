@@ -3,7 +3,6 @@ package com.smartchoicehub.soundwavex.ui.screen.components
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.smartchoicehub.soundwavex.navigation.Screen
 
 @Composable
@@ -17,22 +16,25 @@ fun BottomNavBar(
     )
 
     NavigationBar {
+        val currentDestination = navController.currentBackStackEntry?.destination?.route
+
         items.forEach { screen ->
             NavigationBarItem(
                 icon = {
                     screen.icon?.let { Icon(it, contentDescription = null) }
                 },
-                selected = false,
+                selected = currentDestination == screen.route,
                 onClick = {
-                    if (screen is Screen.Player) {
-                        navController.navigate("player") {
+                    if (screen == Screen.Main) {
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(Screen.Main.route) {
+                                inclusive = true
+                            }
                             launchSingleTop = true
+                            restoreState = true
                         }
                     } else {
                         navController.navigate(screen.route) {
-                            popUpTo(navController.graph.findStartDestination().route!!) {
-                                saveState = true
-                            }
                             launchSingleTop = true
                             restoreState = true
                         }

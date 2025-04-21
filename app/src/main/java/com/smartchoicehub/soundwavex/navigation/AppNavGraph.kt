@@ -1,5 +1,6 @@
 package com.smartchoicehub.soundwavex.navigation
 
+import MainViewModel
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -13,7 +14,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.smartchoicehub.soundwavex.ui.screen.main.MainScreen
-import com.smartchoicehub.soundwavex.ui.screen.main.MainViewModel
 import com.smartchoicehub.soundwavex.ui.screen.player.PlayerScreen
 import com.smartchoicehub.soundwavex.ui.screen.player.PlayerViewModel
 import com.smartchoicehub.soundwavex.ui.screen.settings.SettingsScreen
@@ -39,7 +39,6 @@ fun AppNavGraph(
         composable(Screen.Main.route) {
             MainScreen(
                 mainViewModel = mainViewModel,
-                onToggleTheme = onToggleTheme,
                 onSongClick = { song ->
                     val songs = mainViewModel.songs.value
                     val songsInSameFolder = songs.filter {
@@ -47,7 +46,10 @@ fun AppNavGraph(
                     }
 
                     playerViewModel.play(song, songsInSameFolder)
-                    navController.navigate(Screen.Player.route)
+
+                    navController.navigate(Screen.Player.route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
