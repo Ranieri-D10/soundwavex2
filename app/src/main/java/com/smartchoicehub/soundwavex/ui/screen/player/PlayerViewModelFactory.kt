@@ -7,7 +7,6 @@ import com.smartchoicehub.soundwavex.data.repository.MusicRepository
 class PlayerViewModelFactory(
     private val repository: MusicRepository
 ) : ViewModelProvider.Factory {
-
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PlayerViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")

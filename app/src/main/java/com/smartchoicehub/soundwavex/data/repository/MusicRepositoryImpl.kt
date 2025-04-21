@@ -7,6 +7,7 @@ import com.smartchoicehub.soundwavex.data.model.Bucket
 import com.smartchoicehub.soundwavex.data.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
 
 class MusicRepositoryImpl(private val context: Context) : MusicRepository {
 
@@ -194,13 +195,16 @@ class MusicRepositoryImpl(private val context: Context) : MusicRepository {
 
     override fun playSong(song: Song, onCompletion: () -> Unit) {
         try {
+            val uri = song.uri.toUri()
+
             // Evita repetir a mesma música
             if (currentSongUri == song.uri && mediaPlayer?.isPlaying == true) return
 
-            // Libera qualquer mediaPlayer anterior
+            mediaPlayer?.reset()
             mediaPlayer?.release()
+
             mediaPlayer = MediaPlayer().apply {
-                setDataSource(song.uri)
+                setDataSource(context, uri)
                 setOnCompletionListener {
                     release()
                     currentSongUri = null
@@ -214,7 +218,7 @@ class MusicRepositoryImpl(private val context: Context) : MusicRepository {
 
         } catch (e: Exception) {
             e.printStackTrace()
-            onCompletion() // Em caso de erro, chama também para continuar
+            onCompletion()
         }
     }
 
@@ -242,5 +246,13 @@ class MusicRepositoryImpl(private val context: Context) : MusicRepository {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    override fun getCurrentPosition(): Long {
+        return mediaPlayer?.currentPosition?.toLong() ?: 0L
+    }
+
+    override fun seekTo(position: Long) {
+        mediaPlayer?.seekTo(position.toInt())
     }
 }

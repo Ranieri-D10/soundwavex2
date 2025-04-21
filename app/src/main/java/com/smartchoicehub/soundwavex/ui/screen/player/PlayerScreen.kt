@@ -1,85 +1,119 @@
 package com.smartchoicehub.soundwavex.ui.screen.player
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.smartchoicehub.soundwavex.data.model.Song
+import coil.compose.rememberAsyncImagePainter
+import com.smartchoicehub.soundwavex.util.formatTime
 
 @Composable
 fun PlayerScreen(
     viewModel: PlayerViewModel,
-    currentSong: Song,
-    songList: List<Song>
+    modifier: Modifier = Modifier
 ) {
-    // Toca a música ao entrar
-    LaunchedEffect(currentSong) {
-        viewModel.play(currentSong, songList)
-    }
-
-    // Observa o estado de reprodução
+    val song by viewModel.currentSong.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
+    val currentPosition by viewModel.currentPosition.collectAsState()
+    val shuffle by viewModel.shuffleMode.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = currentSong.title,
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = currentSong.artist)
-        Spacer(modifier = Modifier.height(32.dp))
+    song?.let { currentSong ->
+        val totalDuration = currentSong.duration
+        val sliderPosition = currentPosition.coerceIn(0, totalDuration)
 
-        Box(
-            modifier = Modifier
-                .size(200.dp)
-                .padding(16.dp)
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Album Art", modifier = Modifier.align(Alignment.Center))
-        }
+            Image(
+                painter = rememberAsyncImagePainter(currentSong.uri),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(250.dp)
+                    .padding(16.dp),
+                contentScale = ContentScale.Crop
+            )
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            IconButton(onClick = { viewModel.playPrevious() }) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Previous")
+            Text(currentSong.title, style = MaterialTheme.typography.titleLarge)
+            Text(currentSong.artist, style = MaterialTheme.typography.bodyMedium)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Slider with time
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Slider(
+                    value = sliderPosition.toFloat(),
+                    onValueChange = {
+                        viewModel.seekTo(it.toLong())
+                    },
+                    valueRange = 0f..totalDuration.toFloat()
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(formatTime(sliderPosition))
+                    Text(formatTime(totalDuration))
+                }
             }
 
-            IconButton(onClick = {
-                if (isPlaying) viewModel.pause() else viewModel.resume()
-            }) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Controls
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(onClick = { viewModel.playPrevious() }) {
+                    Icon(Icons.Default.SkipPrevious, contentDescription = "Previous")
+                }
+
+                IconButton(onClick = {
+                    if (isPlaying) viewModel.pause() else viewModel.resume()
+                }) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play/Pause"
+                    )
+                }
+
+                IconButton(onClick = { viewModel.playNext() }) {
+                    Icon(Icons.Default.SkipNext, contentDescription = "Next")
+                }
+            }
+
+            IconButton(onClick = { viewModel.toggleShuffle() }) {
                 Icon(
-                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play"
+                    imageVector = Icons.Default.Shuffle,
+                    contentDescription = "Shuffle",
+                    tint = if (shuffle) MaterialTheme.colorScheme.primary else Color.Gray
                 )
             }
-
-            IconButton(onClick = { viewModel.playNext() }) {
-                Icon(Icons.Default.ArrowForward, contentDescription = "Next")
-            }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        val shuffleOn by viewModel.shuffleMode.collectAsState()
-
-        IconButton(onClick = { viewModel.toggleShuffle() }) {
-            Icon(
-                imageVector = Icons.Default.Shuffle,
-                contentDescription = "Toggle Shuffle",
-                tint = if (shuffleOn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-            )
+    } ?: run {
+        // Fallback when no song selected
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("No song selected")
         }
     }
 }

@@ -1,18 +1,22 @@
 package com.smartchoicehub.soundwavex.ui.screen.player
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.smartchoicehub.soundwavex.data.model.Song
 import com.smartchoicehub.soundwavex.data.repository.MusicRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class PlayerViewModel(
     private val repository: MusicRepository
 ) : ViewModel() {
 
-    private var currentSong: Song? = null
-    private var songList: List<Song> = emptyList()
-    private var currentIndex = 0
+    private val _currentSong = MutableStateFlow<Song?>(null)
+    val currentSong: StateFlow<Song?> = _currentSong
+
+    private val _currentPlaylist = MutableStateFlow<List<Song>>(emptyList())
+    val currentPlaylist: StateFlow<List<Song>> = _currentPlaylist
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying
@@ -20,13 +24,38 @@ class PlayerViewModel(
     private val _shuffleMode = MutableStateFlow(false)
     val shuffleMode: StateFlow<Boolean> = _shuffleMode
 
+    private val _currentPosition = MutableStateFlow(0L)
+    val currentPosition: StateFlow<Long> = _currentPosition
+
+    private var currentIndex = 0
+
+    init {
+        observePlaybackPosition()
+    }
+
+    private fun observePlaybackPosition() {
+        viewModelScope.launch {
+            while (true) {
+                _isPlaying.value.let { playing ->
+                    if (playing) {
+                        _currentPosition.value = repository.getCurrentPosition()
+                    }
+                }
+                delay(500L)
+            }
+        }
+    }
+
     fun play(song: Song, songsInFolder: List<Song>) {
-        songList = songsInFolder
-        currentIndex = songList.indexOf(song)
-        currentSong = song
+        _currentPlaylist.value = songsInFolder
+        currentIndex = songsInFolder.indexOf(song)
+        _currentSong.value = song
+        _currentPosition.value = 0L
+
         repository.playSong(song) {
             playNext()
         }
+
         _isPlaying.value = true
     }
 
@@ -36,7 +65,7 @@ class PlayerViewModel(
     }
 
     fun resume() {
-        currentSong?.let {
+        _currentSong.value?.let {
             repository.playSong(it) {
                 playNext()
             }
@@ -45,24 +74,32 @@ class PlayerViewModel(
     }
 
     fun playNext() {
-        if (songList.isEmpty()) return
+        val list = _currentPlaylist.value
+        if (list.isEmpty()) return
+
         currentIndex = if (_shuffleMode.value) {
-            (songList.indices - currentIndex).random()
+            (list.indices - currentIndex).random()
         } else {
-            (currentIndex + 1) % songList.size
+            (currentIndex + 1) % list.size
         }
-        play(songList[currentIndex], songList)
+
+        play(list[currentIndex], list)
     }
 
     fun playPrevious() {
-        if (songList.isEmpty()) return
-        currentIndex = if (currentIndex - 1 < 0) songList.lastIndex else currentIndex - 1
-        play(songList[currentIndex], songList)
+        val list = _currentPlaylist.value
+        if (list.isEmpty()) return
+
+        currentIndex = if (currentIndex - 1 < 0) list.lastIndex else currentIndex - 1
+        play(list[currentIndex], list)
     }
 
     fun toggleShuffle() {
         _shuffleMode.value = !_shuffleMode.value
     }
 
-    fun getCurrentSong(): Song? = currentSong
+    fun seekTo(position: Long) {
+        repository.seekTo(position)
+        _currentPosition.value = position
+    }
 }

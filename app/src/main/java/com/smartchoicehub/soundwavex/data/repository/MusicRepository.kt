@@ -13,4 +13,6 @@ interface MusicRepository {
     fun pause()
     fun releasePlayer()
     fun resume()
+    fun getCurrentPosition(): Long
+    fun seekTo(position: Long)
 }
